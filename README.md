@@ -1,6 +1,6 @@
 # 互动白板 WhiteBoard
 
-由DeepSeek Harness + Deepseek V4.1 Flash模型写的类似希沃白板功能
+由DeepSeek Harness + Deepseek V4.1 Flash模型写的大屏白板
 
 *用来测试DSH的能力的*
 
