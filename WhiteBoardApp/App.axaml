@@ -1,0 +1,22 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WhiteBoard.App"
+             RequestedThemeVariant="Default">
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://WhiteBoard/Assets/Icons.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <!--
+    注意：FluentAvalonia 的主题在 App.axaml.cs 里用代码加载。
+    它的资源地址是跨程序集的（avares://FluentAvalonia/...），
+    Avalonia 的 XAML 编译器无法在编译期解析，写成 StyleInclude 会直接编译失败。
+  -->
+  <Application.Styles>
+    <StyleInclude Source="avares://WhiteBoard/Views/AppStyles.axaml" />
+  </Application.Styles>
+</Application>

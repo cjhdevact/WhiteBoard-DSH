@@ -1,0 +1,390 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WhiteBoard.ViewModels"
+        xmlns:ctrl="using:WhiteBoard.Controls"
+        xmlns:conv="using:WhiteBoard.Converters"
+        xmlns:fa="using:FluentAvalonia.UI.Controls"
+        x:Class="WhiteBoard.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding WindowTitleText}"
+        Width="1500" Height="950"
+        MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1">
+
+  <Window.Resources>
+    <conv:HexToBrushConverter x:Key="HexToBrush" />
+    <conv:NotConverter x:Key="Not" />
+  </Window.Resources>
+
+  <Grid RowDefinitions="Auto,*,Auto">
+
+    <!-- ═══════════ 标题栏（默认隐藏，全屏白板模式） ═══════════ -->
+    <Border Grid.Row="0" Name="TitleBar" Classes="topBar" Height="40"
+            IsVisible="{Binding !IsTitleBarHidden}"
+            PointerPressed="OnTitleBarPressed">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
+                    Margin="10,0,0,0" Spacing="8">
+          <TextBlock Text="{Binding WindowTitleText}" FontSize="13" VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis" MaxWidth="420" />
+          <TextBlock Text="{Binding PageIndicators}" FontSize="12" Classes="caption"
+                     VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- 标题栏只保留窗口按钮；功能按钮都放到底部工具条 -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
+          <Button Classes="winbtn" Content="—" Click="OnMinimizeClick" ToolTip.Tip="最小化" />
+          <Button Classes="winbtn" Content="▢" Click="OnMaximizeRestoreClick" ToolTip.Tip="最大化 / 还原" />
+          <Button Classes="winbtn close" Content="✕" Click="OnCloseClick" ToolTip.Tip="关闭" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ═══════════ 主体：画布 + 右侧页面栏 ═══════════ -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+
+      <!-- 画布：铺满，板面颜色即页面背景 -->
+      <Grid Grid.Column="0">
+        <Border Background="Transparent">
+          <ctrl:WhiteboardCanvas Name="Canvas"
+                                 Page="{Binding ActivePage}"
+                                 Tool="{Binding ActiveTool}"
+                                 PenColor="{Binding PenColor}"
+                                 PenThickness="{Binding EffectiveThickness}"
+                                 ShapeFill="{Binding ShapeFill}"
+                                 EraserMode="{Binding EraserMode}"
+                                 EraserRadius="{Binding EraserRadius}"
+                                 ShowGrid="{Binding ShowGrid}"
+                                 ShowLaser="{Binding LaserEnabled}"
+                                 Zoom="{Binding CurrentZoom, Mode=TwoWay}" />
+        </Border>
+
+        <!-- 左上角状态胶囊：页码可点，切换页面缩略图面板 -->
+        <Border Background="{DynamicResource AcrylicInAppFillColorDefaultBrush}"
+                CornerRadius="8" Padding="4,3" HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="12">
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Button Name="PageToggleButton" Command="{Binding TogglePagePanelCommand}"
+                    Padding="10,4" CornerRadius="6" Background="Transparent" BorderThickness="0"
+                    ToolTip.Tip="点击显示 / 隐藏页面缩略图">
+              <TextBlock Text="{Binding PageIndicators}" FontSize="12.5" FontWeight="SemiBold" />
+            </Button>
+            <TextBlock Text="{Binding ToolDisplayName}" FontSize="12" Classes="caption"
+                       VerticalAlignment="Center" Margin="0,0,8,0" />
+          </StackPanel>
+        </Border>
+
+        <!-- 右上角缩放提示 -->
+        <Border Background="{DynamicResource AcrylicInAppFillColorDefaultBrush}"
+                CornerRadius="8" Padding="12,6" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="12" IsHitTestVisible="False">
+          <TextBlock Text="{Binding ZoomPercent, StringFormat='缩放 {0}%'}" FontSize="12" Classes="caption" />
+        </Border>
+
+        <!-- 页面背景设置弹层 -->
+        <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                CornerRadius="8" Padding="16"
+                BoxShadow="0 8 28 0 #55000000"
+                Width="300"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12,48,12,0"
+                IsVisible="{Binding IsBackgroundPanelOpen}">
+          <StackPanel Spacing="10">
+            <TextBlock Text="页面背景" FontSize="14" FontWeight="SemiBold" />
+
+            <TextBlock Text="底色" Classes="caption" />
+            <ItemsControl ItemsSource="{Binding BackgroundColors}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PaletteColor">
+                  <Button Classes="swatch" Width="30" Height="30" CornerRadius="6"
+                          Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SetBackgroundColorCommand}"
+                          CommandParameter="{Binding}" ToolTip.Tip="{Binding Name}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="底纹" Classes="caption" Margin="0,4,0,0" />
+            <ItemsControl ItemsSource="{Binding BackgroundStyleNames}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <Button Content="{Binding}" Margin="0,0,6,6" Padding="10,5" FontSize="12"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SetBackgroundStyleCommand}"
+                          CommandParameter="{Binding}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="本页名称" Classes="caption" Margin="0,4,0,0" />
+            <TextBox Text="{Binding ActivePageTitle, Mode=TwoWay}" FontSize="12.5" Height="30" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+              <Button Content="移除本页背景截图" FontSize="12" Padding="10,6"
+                      Command="{Binding ClearBackgroundImageCommand}" />
+              <Button Content="关闭" FontSize="12" Padding="10,6" Command="{Binding ClosePanelCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <!-- 右侧页面缩略图（默认隐藏，点页码才显示） -->
+      <Border Grid.Column="1" Classes="topBar" BorderThickness="1,0,0,0"
+              IsVisible="{Binding IsPagePanelVisible}" Width="168">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Margin="12,12,12,6" Spacing="4">
+            <TextBlock Text="页面" Classes="section" />
+            <TextBlock Text="{Binding PageIndicators}" Classes="caption" />
+          </StackPanel>
+
+          <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="10,6,10,12" Spacing="4">
+            <Button Width="42" Height="34" Command="{Binding AddPageCommand}" ToolTip.Tip="新增一页">
+              <fa:SymbolIcon Symbol="Add" FontSize="15" />
+            </Button>
+            <Button Width="42" Height="34" Command="{Binding DuplicatePageCommand}" ToolTip.Tip="复制当前页">
+              <fa:SymbolIcon Symbol="Copy" FontSize="15" />
+            </Button>
+            <Button Width="42" Height="34" Command="{Binding DeletePageCommand}" ToolTip.Tip="删除当前页">
+              <fa:SymbolIcon Symbol="Delete" FontSize="15" />
+            </Button>
+          </StackPanel>
+
+          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding PageList}" Margin="6,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PageItemViewModel">
+                  <Border Classes="pageCard" Classes.active="{Binding IsActive}"
+                          PointerPressed="OnPageCardPressed" ToolTip.Tip="{Binding ItemCountText}">
+                    <StackPanel Spacing="2">
+                      <Border Height="74" Background="White" CornerRadius="3" ClipToBounds="True">
+                        <Image Source="{Binding Thumbnail}" Stretch="Uniform" />
+                      </Border>
+                      <TextBlock Text="{Binding Title}" FontSize="10.5" HorizontalAlignment="Center"
+                                 TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Grid>
+
+    <!-- ═══════════ 底部：颜色条 + 工具条 ═══════════ -->
+    <Border Grid.Row="2" Classes="bottomBar">
+      <Grid RowDefinitions="Auto,Auto">
+
+        <!-- 颜色 / 粗细 / 填充（仅画笔类工具） -->
+        <Border Grid.Row="0" Padding="14,8" BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                IsVisible="{Binding IsColorOptionsVisible}">
+          <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Center">
+
+            <ItemsControl ItemsSource="{Binding Palette}" VerticalAlignment="Center">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PaletteColor">
+                  <Button Classes="swatch"
+                          Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PickColorCommand}"
+                          CommandParameter="{Binding}" ToolTip.Tip="{Binding Name}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="2,4" />
+
+            <!-- 自定义颜色（RGB 滑杆可写，拖动即时生效） -->
+            <Button Width="30" Height="30" Padding="0" CornerRadius="15"
+                    Background="{Binding ColorPreviewBrush}" ToolTip.Tip="自定义颜色 / 屏幕取色">
+              <Button.Flyout>
+                <Flyout Placement="Top">
+                  <StackPanel Width="280" Spacing="10">
+                    <TextBlock Text="自定义颜色" FontSize="13" FontWeight="SemiBold" />
+
+                    <Grid ColumnDefinitions="64,*">
+                      <Border Grid.Column="0" Height="42" CornerRadius="6" BorderThickness="1"
+                              BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                              Background="{Binding ColorPreviewBrush}" />
+                      <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="3">
+                        <TextBlock Text="十六进制" FontSize="11" Classes="caption" />
+                        <TextBox Text="{Binding PenColorHex, Mode=OneWay}" FontSize="12" Height="28"
+                                 IsReadOnly="True" VerticalContentAlignment="Center" />
+                      </StackPanel>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="18,*,44" RowDefinitions="Auto,Auto,Auto">
+                      <TextBlock Grid.Row="0" Grid.Column="0" Text="R" FontSize="12"
+                                 Foreground="#FFE5484D" VerticalAlignment="Center" />
+                      <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="255"
+                              Value="{Binding ColorR, Mode=TwoWay}" />
+                      <TextBlock Grid.Row="0" Grid.Column="2" FontSize="11.5" VerticalAlignment="Center"
+                                 Text="{Binding ColorR}" />
+
+                      <TextBlock Grid.Row="1" Grid.Column="0" Text="G" FontSize="12"
+                                 Foreground="#FF1EA855" VerticalAlignment="Center" />
+                      <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255"
+                              Value="{Binding ColorG, Mode=TwoWay}" />
+                      <TextBlock Grid.Row="1" Grid.Column="2" FontSize="11.5" VerticalAlignment="Center"
+                                 Text="{Binding ColorG}" />
+
+                      <TextBlock Grid.Row="2" Grid.Column="0" Text="B" FontSize="12"
+                                 Foreground="#FF1B6FE0" VerticalAlignment="Center" />
+                      <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255"
+                              Value="{Binding ColorB, Mode=TwoWay}" />
+                      <TextBlock Grid.Row="2" Grid.Column="2" FontSize="11.5" VerticalAlignment="Center"
+                                 Text="{Binding ColorB}" />
+                    </Grid>
+
+                    <TextBlock Text="常用色" FontSize="11" Classes="caption" />
+                    <ItemsControl ItemsSource="{Binding Palette}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PaletteColor">
+                          <Button Classes="swatch" Width="24" Height="24" CornerRadius="12"
+                                  Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).PickColorCommand}"
+                                  CommandParameter="{Binding}" ToolTip.Tip="{Binding Name}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Button Content="屏幕取色" FontSize="12" Padding="10,5"
+                              Command="{Binding PickScreenColorCommand}"
+                              ToolTip.Tip="抓取整个屏幕后点击任意位置取色" />
+                      <Button Content="黑白互换" FontSize="12" Padding="10,5"
+                              Command="{Binding SwapBlackWhiteCommand}" />
+                    </StackPanel>
+                  </StackPanel>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
+
+            <Border Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="2,4" />
+
+            <TextBlock Text="粗细" FontSize="12" VerticalAlignment="Center" Classes="caption" />
+            <Slider Width="140" Minimum="1" Maximum="24" VerticalAlignment="Center"
+                    Value="{Binding EffectiveThickness, Mode=TwoWay}" ToolTip.Tip="笔迹粗细" />
+            <TextBlock Text="{Binding EffectiveThickness, StringFormat='{}{0:0.#} px'}"
+                       FontSize="11.5" VerticalAlignment="Center" Width="48" Classes="caption" />
+
+            <!-- 图形填充 -->
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                        IsVisible="{Binding IsShapeOptionsVisible}">
+              <Border Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="2,4" />
+              <TextBlock Text="填充" FontSize="12" VerticalAlignment="Center" Classes="caption" />
+              <Button Content="无" FontSize="12" Padding="10,4"
+                      Command="{Binding SetShapeFillCommand}" CommandParameter="None" />
+              <Button Content="半透明" FontSize="12" Padding="10,4"
+                      Command="{Binding SetShapeFillCommand}" CommandParameter="Translucent" />
+              <Button Content="实心" FontSize="12" Padding="10,4"
+                      Command="{Binding SetShapeFillCommand}" CommandParameter="Solid" />
+            </StackPanel>
+
+            <!-- 文本 -->
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                        IsVisible="{Binding IsTextOptionsVisible}">
+              <Border Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="2,4" />
+              <TextBlock Text="字号" FontSize="12" VerticalAlignment="Center" Classes="caption" />
+              <Slider Width="120" Minimum="12" Maximum="120" Value="{Binding FontSize, Mode=TwoWay}" />
+              <Button Content="插入文本" FontSize="12" Padding="10,4" Command="{Binding InsertTextCommand}" />
+            </StackPanel>
+
+            <!-- 橡皮 -->
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                        IsVisible="{Binding IsEraserOptionsVisible}">
+              <Border Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="2,4" />
+              <TextBlock Text="擦除方式" FontSize="12" VerticalAlignment="Center" Classes="caption" />
+              <Button Content="像素橡皮" FontSize="12" Padding="10,4"
+                      Command="{Binding SetEraserModeCommand}" CommandParameter="Pixel" />
+              <Button Content="整笔擦除" FontSize="12" Padding="10,4"
+                      Command="{Binding SetEraserModeCommand}" CommandParameter="Stroke" />
+              <TextBlock Text="大小" FontSize="12" VerticalAlignment="Center" Classes="caption" />
+              <Slider Width="110" Minimum="4" Maximum="60" Value="{Binding EraserRadius, Mode=TwoWay}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- 工具条：菜单在左，工具居中（带文字），页控在右 -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="10,4,10,6">
+
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <Button Name="MenuButton" Height="40" Padding="12,0" Background="Transparent"
+                    BorderThickness="0" ToolTip.Tip="主菜单">
+              <StackPanel Orientation="Horizontal" Spacing="7">
+                <fa:SymbolIcon Symbol="GlobalNavigationButton" FontSize="16" />
+                <TextBlock Text="菜单" FontSize="12.5" VerticalAlignment="Center" />
+              </StackPanel>
+              <Button.Flyout>
+                <MenuFlyout Placement="TopEdgeAlignedLeft">
+                  <MenuItem Header="新建白板" Command="{Binding NewDocumentCommand}" InputGesture="Ctrl+N" />
+                  <MenuItem Header="打开…" Command="{Binding OpenDocumentCommand}" InputGesture="Ctrl+O" />
+                  <MenuItem Header="保存" Command="{Binding SaveDocumentCommand}" InputGesture="Ctrl+S" />
+                  <MenuItem Header="另存为…" Command="{Binding SaveAsDocumentCommand}" />
+                  <Separator />
+                  <MenuItem Header="导出当前页为图片…" Command="{Binding ExportPngCommand}" />
+                  <MenuItem Header="导出全部页面为图片…" Command="{Binding ExportAllPngCommand}" />
+                  <Separator />
+                  <MenuItem Header="页面背景 / 底纹…" Command="{Binding OpenPanelCommand}" CommandParameter="Background" />
+                  <MenuItem Header="清空当前页" Command="{Binding ClearPageCommand}" />
+                  <Separator />
+                  <MenuItem Header="显示 / 隐藏标题栏" Command="{Binding ToggleTitleBarCommand}" />
+                  <MenuItem Header="深色 / 浅色主题" Command="{Binding ToggleThemeCommand}" />
+                  <MenuItem Header="快捷键说明" Command="{Binding ShowShortcutsCommand}" />
+                  <MenuItem Header="关于 互动白板" Command="{Binding ShowAboutCommand}" />
+                  <Separator />
+                  <MenuItem Header="退出" Command="{Binding ExitCommand}" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+          </StackPanel>
+
+          <!-- FluentAvalonia CommandBar：按钮带文字说明 -->
+          <fa:CommandBar Name="ToolBar" Grid.Column="1" VerticalAlignment="Center" />
+
+          <!-- 切页按钮移到右边 -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <Button Height="38" Padding="10,0" Command="{Binding PreviousPageCommand}" ToolTip.Tip="上一页">
+              <fa:SymbolIcon Symbol="Back" FontSize="14" />
+            </Button>
+            <Button Height="38" Padding="10,0" Command="{Binding NextPageCommand}" ToolTip.Tip="下一页">
+              <fa:SymbolIcon Symbol="Forward" FontSize="14" />
+            </Button>
+            <Border Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="4,6" />
+            <Button Height="38" Padding="10,0" Command="{Binding AddPageCommand}" ToolTip.Tip="新增一页">
+              <fa:SymbolIcon Symbol="Add" FontSize="14" />
+            </Button>
+            <Button Height="38" Padding="10,0" Command="{Binding FitToViewportCommand}" ToolTip.Tip="适应窗口">
+              <fa:SymbolIcon Symbol="ViewAll" FontSize="14" />
+            </Button>
+            <Button Height="38" Padding="10,0" Command="{Binding ToggleFullScreenCommand}" ToolTip.Tip="全屏 (F11)">
+              <fa:SymbolIcon Symbol="FullScreen" FontSize="14" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

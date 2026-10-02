@@ -1,0 +1,22 @@
+# 构建输出
+bin/
+obj/
+artifacts/
+captures/
+
+# 沙箱 / 本地运行产生的辅助目录
+.dotnet-home/
+
+# 用户与 IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# 临时文件
+*.log
+*.binlog
+smoke.log
+smoke.err.log
+cap.log
+cap.err.log

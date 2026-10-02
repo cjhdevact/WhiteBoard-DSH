@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WhiteBoard.ViewModels"
+        xmlns:ctrl="using:WhiteBoard.Controls"
+        x:Class="WhiteBoard.Views.AnnotationCanvasWindow"
+        x:DataType="vm:AnnotationOverlayViewModel"
+        Title="桌面批注"
+        SystemDecorations="None"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+  <!--
+    ══ 批注画布窗口 ══
+    覆盖整块屏幕、背景透明的无边框窗口，只负责书写。
+
+    关键点（踩过的坑）：
+    1) 画布 WhiteboardCanvas 继承自 Control，没有 Background 属性；
+       透明模式下它什么都不画，Avalonia 就无法对它做命中测试 ——
+       表现就是「批注层点不动、写不了字」。
+       所以这里用一层 Border（Background=Transparent）包住它，
+       由 Border 兜住指针消息，画布作为子元素照常收到事件。
+    2) 不使用 ExtendClientAreaToDecorationsHint：它会让窗口进入
+       Avalonia 自绘边框模式，透明窗口下会影响指针消息投递。
+    3) 窗口必须被激活（见 code-behind 的 Opened），否则触屏 / 笔的第一下
+       只会激活窗口、不产生 PointerPressed。
+  -->
+  <Border Background="Transparent">
+    <ctrl:WhiteboardCanvas Name="Canvas"
+                           Page="{Binding ActivePage}"
+                           Tool="{Binding ActiveTool}"
+                           PenColor="{Binding PenColor}"
+                           PenThickness="{Binding EffectiveThickness}"
+                           ShapeFill="{Binding ShapeFill}"
+                           EraserMode="{Binding EraserMode}"
+                           EraserRadius="{Binding EraserRadius}"
+                           ShowLaser="{Binding LaserEnabled}"
+                           TransparentBackground="{Binding IsTransparent}"
+                           CaptureBackground="False"
+                           AllowPan="False"
+                           ShowGrid="False" />
+  </Border>
+</Window>

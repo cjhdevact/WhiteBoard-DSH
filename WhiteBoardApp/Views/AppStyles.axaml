@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="using:WhiteBoard.Converters"
+        xmlns:fa="using:FluentAvalonia.UI.Controls">
+
+  <!--
+    应用补充样式。
+    颜色全部通过 DynamicResource 引用 FluentAvalonia 的主题资源，
+    因此在系统深色 / 浅色切换时会自动跟随。
+  -->
+  <Styles.Resources>
+    <ResourceDictionary>
+      <conv:HexToBrushConverter x:Key="HexToBrush" />
+      <conv:ToolEqualsConverter x:Key="ToolEquals" />
+      <conv:EqualsConverter x:Key="Equals" />
+      <conv:NotConverter x:Key="Not" />
+      <conv:NotNullToBoolConverter x:Key="NotNullToBool" />
+
+      <!-- 画布周围的底色：深色主题偏黑，浅色主题偏浅灰 -->
+      <SolidColorBrush x:Key="CanvasBackdropBrush" Color="#FF1F1F1F" />
+      <SolidColorBrush x:Key="PageShadowBrush" Color="#40000000" />
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <!-- ── 画布容器 ── -->
+  <Style Selector="Border.canvasBackdrop">
+    <Setter Property="Background" Value="{DynamicResource CanvasBackdropBrush}" />
+  </Style>
+
+  <Style Selector="Border.paper">
+    <Setter Property="BoxShadow" Value="0 8 32 0 #66000000" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
+  <!-- ── 顶栏 ── -->
+  <Style Selector="Border.topBar">
+    <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <!-- ── 底部工具区 ── -->
+  <Style Selector="Border.bottomBar">
+    <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+  </Style>
+
+  <!-- ── 可移动批注工具条的拖动手柄 ── -->
+  <Style Selector="Border.dragHandle">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Cursor" Value="SizeAll" />
+  </Style>
+
+  <!-- ── 颜色色板按钮（与希沃一致：圆形色块） ── -->
+  <Style Selector="Button.swatch">
+    <Setter Property="Width" Value="26" />
+    <Setter Property="Height" Value="26" />
+    <Setter Property="CornerRadius" Value="13" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="#33000000" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="2,0" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+
+  <Style Selector="Button.swatch:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+  </Style>
+
+  <!-- ── 形状选择弹层里的图标按钮 ── -->
+  <Style Selector="Button.shapeTile">
+    <Setter Property="Width" Value="52" />
+    <Setter Property="Height" Value="52" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.shapeTile:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+  </Style>
+
+  <Style Selector="Button.shapeTile.selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+
+  <!-- ── 页缩略图卡片 ── -->
+  <Style Selector="Border.pageCard">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="3" />
+    <Setter Property="Margin" Value="3,0" />
+  </Style>
+
+  <Style Selector="Border.pageCard:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="Border.pageCard.active">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+  </Style>
+
+  <!-- ── 文本 ── -->
+  <Style Selector="TextBlock.caption">
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.section">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="0,6,0,2" />
+  </Style>
+
+  <!-- ══════════════ 工具条按钮模板 ══════════════
+       FluentAvalonia 自带的 CommandBarButton 模板在本工程里会把标签 TextBlock
+       压缩成 0×0（可视树里能看到两个空尺寸的 TextBlock），文字说明显示不出来。
+       这里直接给这两个类型换上自己的模板：图标在上、标签在下，
+       既能保证文字可见，也保留了 Fluent 的圆角与悬停反馈。 -->
+
+  <ControlTheme x:Key="WhiteBoardCommandBarButtonTheme"
+                TargetType="fa:CommandBarButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="MinWidth" Value="60" />
+    <Setter Property="MinHeight" Value="52" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="Root"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                Padding="{TemplateBinding Padding}">
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="3">
+            <ContentPresenter Name="IconHost"
+                              Content="{TemplateBinding IconSource}"
+                              HorizontalAlignment="Center"
+                              Width="22" Height="22" />
+            <TextBlock Text="{TemplateBinding Label}"
+                       FontSize="11.5"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       MaxWidth="76"
+                       TextTrimming="CharacterEllipsis"
+                       Foreground="{TemplateBinding Foreground}" />
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.4" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="WhiteBoardCommandBarToggleButtonTheme"
+                TargetType="fa:CommandBarToggleButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="MinWidth" Value="60" />
+    <Setter Property="MinHeight" Value="52" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="Root"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                Padding="{TemplateBinding Padding}">
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="3">
+            <ContentPresenter Name="IconHost"
+                              Content="{TemplateBinding IconSource}"
+                              HorizontalAlignment="Center"
+                              Width="22" Height="22" />
+            <TextBlock Text="{TemplateBinding Label}"
+                       FontSize="11.5"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       MaxWidth="76"
+                       TextTrimming="CharacterEllipsis"
+                       Foreground="{TemplateBinding Foreground}" />
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+    </Style>
+    <!-- 选中态：强调色底 + 反白文字，一眼就能看出当前工具 -->
+    <Style Selector="^:checked /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.4" />
+    </Style>
+  </ControlTheme>
+
+  <!-- ══════════════ 复选菜单项（二级菜单里打勾） ══════════════ -->
+  <Style Selector="MenuItem">
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+</Styles>
+

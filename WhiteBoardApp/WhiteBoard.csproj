@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AssemblyName>WhiteBoard</AssemblyName>
+    <RootNamespace>WhiteBoard</RootNamespace>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <Version>1.0.0</Version>
+    <Product>互动白板 WhiteBoard</Product>
+    <Company>WhiteBoard</Company>
+    <EnableDefaultAvaloniaItems>true</EnableDefaultAvaloniaItems>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <AvaloniaTelemetryOptOut>true</AvaloniaTelemetryOptOut>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.12" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <!-- Fluent 控件库：CommandBar（AppBarButton / AppBarToggleButton 的对应实现）、
+         SymbolIcon / PathIconSource 图标体系，以及系统深色浅色跟随 -->
+    <PackageReference Include="FluentAvaloniaUI" Version="2.4.1" />
+  </ItemGroup>
+
+</Project>

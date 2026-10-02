@@ -1,0 +1,146 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WhiteBoard.ViewModels"
+        xmlns:ctrl="using:WhiteBoard.Controls"
+        xmlns:conv="using:WhiteBoard.Converters"
+        xmlns:fa="using:FluentAvalonia.UI.Controls"
+        x:Class="WhiteBoard.Views.AnnotationToolBarWindow"
+        x:DataType="vm:AnnotationOverlayViewModel"
+        Title="桌面批注工具条"
+        SizeToContent="WidthAndHeight"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True"
+        SystemDecorations="None"
+        WindowStartupLocation="Manual"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1">
+
+  <!--
+    桌面批注工具条：与主界面同一套 FluentAvalonia CommandBar，
+    但更紧凑（笔 / 形状都收进二级菜单）。
+    独立窗口的意义：鼠标穿透只作用于画布窗口，工具条永远可点。
+    顶部有拖动手柄，默认停在屏幕右下角。
+  -->
+  <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+          CornerRadius="10"
+          BorderThickness="1"
+          BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+          BoxShadow="0 10 30 0 #66000000"
+          Padding="4,2,4,4"
+          Margin="16">
+    <StackPanel Spacing="2">
+
+      <!-- 拖动手柄 -->
+      <Border Name="DragHandle" Classes="dragHandle" Height="22" CornerRadius="6"
+              PointerPressed="OnDragHandlePressed" ToolTip.Tip="按住拖动可移动工具条">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <TextBlock Grid.Column="0" Text="桌面批注" FontSize="11.5" FontWeight="SemiBold"
+                     VerticalAlignment="Center" Margin="8,0,0,0" />
+          <TextBlock Grid.Column="2" Text="{Binding ModeText}" FontSize="10.5" Classes="caption"
+                     VerticalAlignment="Center" Margin="0,0,8,0" />
+        </Grid>
+      </Border>
+
+      <!-- 工具条本体 -->
+      <Grid ColumnDefinitions="Auto,Auto,Auto">
+
+        <!-- 左：菜单 -->
+        <Button Grid.Column="0" Name="MenuButton" Height="38" Padding="10,0"
+                Background="Transparent" BorderThickness="0" VerticalAlignment="Center"
+                ToolTip.Tip="批注菜单">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <fa:SymbolIcon Symbol="GlobalNavigationButton" FontSize="15" />
+            <TextBlock Text="菜单" FontSize="12" VerticalAlignment="Center" />
+          </StackPanel>
+          <Button.Flyout>
+            <MenuFlyout Placement="TopEdgeAlignedLeft">
+              <MenuItem Header="切回白板" Command="{Binding SwitchToWhiteboardCommand}" />
+              <MenuItem Header="保存白板" Command="{Binding SaveCommand}" />
+              <Separator />
+              <MenuItem Header="清空本页批注" Command="{Binding ClearPageCommand}" />
+              <MenuItem Header="撤销" Command="{Binding UndoCommand}" InputGesture="Ctrl+Z" />
+              <MenuItem Header="重做" Command="{Binding RedoCommand}" InputGesture="Ctrl+Y" />
+              <Separator />
+              <MenuItem Header="退出批注" Command="{Binding CloseCommand}" InputGesture="Escape" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+
+        <!-- 中：笔 / 橡皮 / 形状 / 撤销 / 重做 / 清空 -->
+        <fa:CommandBar Grid.Column="1" Name="ToolBar" VerticalAlignment="Center" />
+
+        <!-- 右：穿透 -->
+        <Button Grid.Column="2" Height="38" Padding="10,0" VerticalAlignment="Center"
+                Command="{Binding ToggleClickThroughCommand}"
+                ToolTip.Tip="开启后鼠标事件穿透到下层程序，工具条仍可点击">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="穿透" FontSize="12" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <!-- 颜色 / 粗细 -->
+      <Border Padding="8,4" CornerRadius="6"
+              Background="{DynamicResource LayerFillColorDefaultBrush}">
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+
+          <ItemsControl ItemsSource="{Binding Palette}" VerticalAlignment="Center"
+                        IsVisible="{Binding IsColorOptionsVisible}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:PaletteColor">
+                <Button Classes="swatch" Width="22" Height="22" CornerRadius="11"
+                        Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                        Command="{Binding $parent[Window].((vm:AnnotationOverlayViewModel)DataContext).PickColorCommand}"
+                        CommandParameter="{Binding}" ToolTip.Tip="{Binding Name}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Slider Width="110" Minimum="1" Maximum="24" VerticalAlignment="Center"
+                  IsVisible="{Binding IsColorOptionsVisible}"
+                  Value="{Binding EffectiveThickness, Mode=TwoWay}" ToolTip.Tip="笔迹粗细" />
+
+          <TextBlock Text="{Binding EffectiveThickness, StringFormat='{}{0:0.#} px'}"
+                     FontSize="11" VerticalAlignment="Center" Width="42" Classes="caption"
+                     IsVisible="{Binding IsColorOptionsVisible}" />
+
+          <!-- 橡皮选项 -->
+          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                      IsVisible="{Binding IsEraserOptionsVisible}">
+            <TextBlock Text="擦除方式" FontSize="11.5" VerticalAlignment="Center" Classes="caption" />
+            <Button Content="像素" FontSize="11.5" Padding="9,3"
+                    Command="{Binding SetEraserModeCommand}" CommandParameter="Pixel" />
+            <Button Content="整笔" FontSize="11.5" Padding="9,3"
+                    Command="{Binding SetEraserModeCommand}" CommandParameter="Stroke" />
+            <Slider Width="96" Minimum="4" Maximum="60" VerticalAlignment="Center"
+                    Value="{Binding EraserRadius, Mode=TwoWay}" />
+          </StackPanel>
+
+          <!-- 图形填充 -->
+          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                      IsVisible="{Binding IsShapeOptionsVisible}">
+            <TextBlock Text="填充" FontSize="11.5" VerticalAlignment="Center" Classes="caption" />
+            <Button Content="无" FontSize="11.5" Padding="9,3"
+                    Command="{Binding SetShapeFillCommand}" CommandParameter="None" />
+            <Button Content="半透明" FontSize="11.5" Padding="9,3"
+                    Command="{Binding SetShapeFillCommand}" CommandParameter="Translucent" />
+            <Button Content="实心" FontSize="11.5" Padding="9,3"
+                    Command="{Binding SetShapeFillCommand}" CommandParameter="Solid" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 提示 -->
+      <TextBlock Text="{Binding HintText}" FontSize="10" Classes="caption"
+                 HorizontalAlignment="Center" Margin="0,1,0,0" />
+    </StackPanel>
+  </Border>
+</Window>
