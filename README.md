@@ -1,6 +1,6 @@
 # 互动白板 WhiteBoard
 
-由DeepSeek Harness + Deepseek V4.1 Flash模型写的大屏白板
+由DeepSeek Harness + Deepseek V4.1 Flash模型使用Avalonia和FluentAvalonia框架写的大屏白板。
 
 *用来测试DSH的能力的*
 
